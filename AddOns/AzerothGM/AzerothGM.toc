@@ -1,0 +1,16 @@
+## Interface: 11200
+## Title: 艾泽拉斯 GM 助手
+## Notes: 角色、装备、传送、机器人、战场测试与物品邮件面板
+## Version: 0.6.10
+## SavedVariables: AzerothGMDB
+Catalog.lua
+Destinations.lua
+DestinationsRegions.lua
+AzerothGM.lua
+BossTeleport.lua
+SkillPanel.lua
+Supplies.lua
+RaidConsumables.lua
+
+RaidSetup.lua
+RaidCoordination.lua

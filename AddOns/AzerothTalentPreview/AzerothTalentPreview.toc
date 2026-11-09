@@ -1,0 +1,7 @@
+## Interface: 11200
+## Title: 原版天赋预览
+## Notes: 先规划天赋，确认后应用；读取当前角色天赋
+## Version: 0.1.0
+## SavedVariablesPerCharacter: AzerothTalentPreviewDB
+TalentData.lua
+AzerothTalentPreview.lua

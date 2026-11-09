@@ -1,0 +1,6 @@
+## Interface: 11200
+## Title: 技能 ID 提示
+## Notes: 在法术书、动作条和宠物技能提示中显示技能 ID
+## Version: 0.1.0
+SpellNames.lua
+AzerothSpellID.lua

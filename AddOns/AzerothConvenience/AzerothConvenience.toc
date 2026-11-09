@@ -1,0 +1,7 @@
+## Interface: 11200
+## Title: 艾泽拉斯便利工具
+## Notes: 普通背包整理、商人自动卖灰色垃圾、自动修理、目标血量数字
+## Version: 0.2.1
+## SavedVariables: AzerothConvenienceDB
+AzerothConvenience.lua
+BagSort.lua
