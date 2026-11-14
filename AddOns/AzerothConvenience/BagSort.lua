@@ -118,9 +118,19 @@ function A.SortStep(dt)
  s.moves=s.moves+1;A.SetStatus("正在整理，等待第"..s.moves.."次移动确认……")
 end
 function A.AttachSortButton()
- if not Bagnon or A.sortButton then return end
- local b=CreateFrame("Button","AzerothConvenienceSort",Bagnon,"UIPanelButtonTemplate")
- b:SetWidth(55);b:SetHeight(20);b:SetPoint("TOPRIGHT",Bagnon,"TOPRIGHT",-45,-8);b:SetText("整理")
- b:SetScript("OnClick",function() A.StartSort() end);A.sortButton=b
+ if not Bagnon then return end
+ local b=A.sortButton
+ if not b then
+  b=CreateFrame("Button","AzerothConvenienceSort",Bagnon,"UIPanelButtonTemplate")
+  b:SetWidth(55);b:SetHeight(20);b:SetPoint("TOPRIGHT",Bagnon,"TOPRIGHT",-45,-8);b:SetText("整理")
+  b:EnableMouse(true);b:RegisterForClicks("LeftButtonUp")
+  b:SetScript("OnClick",function() A.StartSort() end);A.sortButton=b
+ end
+ -- Bagnon's full-width title receives mouse input; the action must sit above it.
+ local level=Bagnon:GetFrameLevel()+1
+ if BagnonTitle then level=math.max(level,BagnonTitle:GetFrameLevel()+1) end
+ local strata=Bagnon:GetFrameStrata()
+ if b:GetFrameStrata()~=strata then b:SetFrameStrata(strata) end
+ if b:GetFrameLevel()~=level then b:SetFrameLevel(level) end
 end
 A.SortSnapshot=snapshot;A.SortPlan=plan
