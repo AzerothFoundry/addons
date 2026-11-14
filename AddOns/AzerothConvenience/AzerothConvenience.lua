@@ -1,4 +1,13 @@
-local A={version="0.2.1",status="尚未整理；点击整理背包开始。"};AzerothConvenience=A
+local A={version="0.2.5",status="尚未整理；点击整理背包开始。"};AzerothConvenience=A
+-- Vanilla GetItemInfo reads an ID or item: fields, not the colored display hyperlink.
+function A.ItemInfo(link)
+ if type(link)=="string" then
+  local _,_,item=string.find(link,"(item:[%d:%-]+)")
+  if not item then return end
+  link=item
+ end
+ return GetItemInfo(link)
+end
 local function config()
  AzerothConvenienceDB=AzerothConvenienceDB or {}
  for _,key in ipairs({"sell","repair","health"}) do if AzerothConvenienceDB[key]==nil then AzerothConvenienceDB[key]=true end end
@@ -46,7 +55,7 @@ function A.MerchantStep()
   for bag=0,4 do for slot=1,GetContainerNumSlots(bag) do
    local key,link,locked=saleKey(bag,slot)
    if link then
-    local _,_,quality=GetItemInfo(link)
+    local _,_,quality=A.ItemInfo(link)
     if quality==nil or locked then unresolved=true
     elseif quality==0 and not v.blocked[bag..":"..slot..":"..key] then
      v.pending={bag=bag,slot=slot,key=key};v.pendingAge=0;UseContainerItem(bag,slot);return
@@ -88,7 +97,7 @@ function A.ShowOptions()
   local quests=CreateFrame("Button","AzerothConvenienceQuestOptions",f,"UIPanelButtonTemplate");quests:SetPoint("TOPLEFT",f,"TOPLEFT",220,-177);quests:SetWidth(205);quests:SetHeight(28);quests:SetText("自动接交任务设置")
   quests:SetScript("OnClick",function() if AutoQuest and AutoQuest.ShowOptions then AutoQuest.ShowOptions() else say("自动接交任务插件未加载，请检查插件列表。") end end)
   local rules=f:CreateFontString("AzerothConvenienceRules","OVERLAY","GameFontHighlightSmall");rules:SetPoint("TOPLEFT",f,"TOPLEFT",24,-220);rules:SetWidth(405);rules:SetJustifyH("LEFT")
-  rules:SetText("整理顺序：炉石最前 → 装备（橙、紫、蓝、绿、白、灰；更高品质优先）→ 消耗品 → 任务物品 → 其它。\n先合并完全相同物品的未满堆叠；同类再按品质、类型、子类型、名称、ID排序，空格最后。\n只整理普通背包，特殊包不动；不出售或删除物品。脱战并关闭商人、放下光标物品后操作。")
+  rules:SetText("整理顺序：炉石最前 → 装备（橙、紫、蓝、绿、白、灰；更高品质优先）→ 消耗品 → 任务物品 → 其它。\n先合并完全相同物品的未满堆叠；同类再按品质、类型、子类型、名称、ID排序，空格最后。\n只整理普通背包，特殊包不动；已有锁定格保留原位。不会出售或删除物品。脱战并关闭商人、放下光标物品后操作。")
   A.statusText=f:CreateFontString("AzerothConvenienceStatus","OVERLAY","GameFontHighlightSmall");A.statusText:SetPoint("TOPLEFT",f,"TOPLEFT",24,-335);A.statusText:SetWidth(405);A.statusText:SetJustifyH("LEFT")
   local tip=f:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall");tip:SetPoint("BOTTOMLEFT",f,"BOTTOMLEFT",22,20);tip:SetText("按住Shift打开商人，可跳过本次自动操作。")
  end
