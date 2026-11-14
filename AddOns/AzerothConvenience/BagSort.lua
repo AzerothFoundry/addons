@@ -40,7 +40,6 @@ local function snapshot()
   if normal==nil then return nil,reason end
   if normal then for slot=1,GetContainerNumSlots(bag) do
    local e,reason=item(bag,slot);if not e then return nil,reason end
-   if e.locked then return nil,"等待背包"..bag.."第"..slot.."格解除锁定……" end
    table.insert(slots,e)
   end end
  end
@@ -64,16 +63,16 @@ local function before(a,b)
 end
 local function plan(slots)
  -- Exact links preserve random properties and enchants when merging stacks.
- for i,a in ipairs(slots) do if not a.empty and a.count<a.max then
+ for i,a in ipairs(slots) do if not a.locked and not a.empty and a.count<a.max then
   for j=i+1,table.getn(slots) do local b=slots[j]
-   if not b.empty and a.link==b.link and b.count>0 then return b,a,"merge" end
+   if not b.locked and not b.empty and a.link==b.link and b.count>0 then return b,a,"merge" end
   end
  end end
- for i,a in ipairs(slots) do
+ for i,a in ipairs(slots) do if not a.locked then
   local best=i
-  for j=i+1,table.getn(slots) do if before(slots[j],slots[best]) then best=j end end
+  for j=i+1,table.getn(slots) do if not slots[j].locked and before(slots[j],slots[best]) then best=j end end
   if best~=i then return slots[best],a,"swap" end
- end
+ end end
 end
 function A.StopSort(reason)
  if not A.sort then return end
@@ -97,7 +96,14 @@ function A.SortStep(dt)
   A.SetStatus(reason or "等待物品信息或锁定解除……");s.wait=s.wait+dt;if s.wait>10 then A.StopSort("整理已停止："..(reason or "物品信息或锁定状态尚未就绪。").."请稍后重试。");end;return end
  if s.pending then
   local a=item(s.pending.a.bag,s.pending.a.slot);local b=item(s.pending.b.bag,s.pending.b.slot)
-  if not a or not b or a.locked or b.locked then return end
+  if not a or not b then return end
+  if a.locked or b.locked then
+   local locked=a.locked and a or b
+   local message="等待本次移动确认：背包"..locked.bag.."第"..locked.slot.."格仍锁定。"
+   s.wait=s.wait+dt;A.SetStatus(message)
+   if s.wait>10 then A.StopSort(message.."已停止，未发送后续移动。") end
+   return
+  end
   if key(a)==s.pending.ak and key(b)==s.pending.bk then
    s.wait=s.wait+dt;if s.wait>5 then A.StopSort("背包移动未获确认，已停止；请稍后重试。");end;return
   end
@@ -105,7 +111,13 @@ function A.SortStep(dt)
  end
  s.waitReason=nil
  local from,to,mode=plan(slots)
- if not from then A.StopSort("背包整理完成（"..s.moves.."次移动）。");return end
+ if not from then
+  local count,first=0,nil
+  for _,e in ipairs(slots) do if e.locked then count=count+1;first=first or e end end
+  if first then A.StopSort("可移动物品整理完成（"..s.moves.."次移动）；保留"..count.."个锁定格，首个为背包"..first.bag.."第"..first.slot.."格。")
+  else A.StopSort("背包整理完成（"..s.moves.."次移动）。") end
+  return
+ end
  if s.moves>=600 then A.StopSort("本轮整理已达上限，请确认背包后重试。");return end
  s.pending={a=from,b=to,ak=key(from),bk=key(to)};s.wait=0
  -- One native inventory transaction per tick. A swap/partial merge leaves the

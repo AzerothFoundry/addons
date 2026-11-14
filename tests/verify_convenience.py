@@ -67,7 +67,7 @@ checks += [r'''
 MerchantFrame:Hide();Inv={["0:1"]={id=2,n=1}};Held=nil;Calls={};CursorHasSpell=function() return 1 end;AzerothConvenience.StartSort();assert(not AzerothConvenience.sort and table.getn(Calls)==0);CursorHasSpell=function() return nil end;SpellIsTargeting=function() return 1 end;AzerothConvenience.StartSort();assert(not AzerothConvenience.sort);MerchantFrame:Show();Inv={["0:1"]={id=3,n=1}};AzerothConvenience.visit={skip=false,sold=0,blocked={},age=0,pendingAge=0};AzerothConvenience.MerchantStep();assert(table.getn(Calls)==0);SpellIsTargeting=function() return nil end;return "spell-targeting cursor is preserved and cannot act on inventory"
 ''']
 checks += [r'''
-SpellIsTargeting=function() return nil end;MerchantFrame:Hide();Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1}};Calls={};Held=nil;AzerothConvenience.ShowOptions();assert(string.find(AzerothConvenienceTitle:GetText(),"0.2.4",1,true));assert(string.find(AzerothConvenienceRules:GetText(),"炉石最前",1,true));AzerothConveniencePanelSort:Click();assert(AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"开始整理",1,true));AzerothConveniencePanelSort:Click();assert(not AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"已停止",1,true));SlashCmdList["AZEROTHCONVENIENCE"]("  SoRt  ");assert(AzerothConvenience.sort);TickSort(30);assert(not AzerothConvenience.sort and Inv["0:1"].id==2);assert(string.find(AzerothConvenienceStatus:GetText(),"整理完成",1,true));return "visible version/rules/status and GUI sort stop; whitespace/case slash starts actual sorting"
+SpellIsTargeting=function() return nil end;MerchantFrame:Hide();Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1}};Calls={};Held=nil;AzerothConvenience.ShowOptions();assert(string.find(AzerothConvenienceTitle:GetText(),"0.2.5",1,true));assert(string.find(AzerothConvenienceRules:GetText(),"炉石最前",1,true));AzerothConveniencePanelSort:Click();assert(AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"开始整理",1,true));AzerothConveniencePanelSort:Click();assert(not AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"已停止",1,true));SlashCmdList["AZEROTHCONVENIENCE"]("  SoRt  ");assert(AzerothConvenience.sort);TickSort(30);assert(not AzerothConvenience.sort and Inv["0:1"].id==2);assert(string.find(AzerothConvenienceStatus:GetText(),"整理完成",1,true));return "visible version/rules/status and GUI sort stop; whitespace/case slash starts actual sorting"
 ''']
 checks += [r'''
 MerchantFrame:Hide();Defs[6948]={"炉石",1,"杂物","杂物",1};Defs[5]={"橙装",5,"护甲","板甲",1};Defs[6]={"紫装",4,"武器","剑",1};Defs[7]={"蓝装",3,"护甲","布甲",1};Defs[8]={"药水",0,"消耗品","药水",1};Defs[9]={"任务信",5,"任务","任务",1};Defs[10]={"稀有材料",5,"材料","材料",1};
@@ -114,6 +114,35 @@ assert(AzerothConvenience.ItemInfo(full)=="剑" and seen=="item:2:1899:-123:77")
 assert(AzerothConvenience.ItemInfo(2)=="剑" and seen==2)
 local invalid=AzerothConvenience.ItemInfo("not an item link");assert(invalid==nil)
 GetItemInfo=info;return "display hyperlinks normalize to complete vanilla item strings, retaining enchant and signed property fields"
+''']
+checks += [r'''
+MerchantFrame:Hide();Held=nil;Calls={};Defs[17591]={"锁定头盔",4,"护甲","布甲",1}
+local num=GetContainerNumSlots;GetContainerNumSlots=function(b) return b==1 and 16 or num(b) end
+local fixed={id=17591,n=1,locked=true};Inv={["0:1"]={id=1,n=7},["0:2"]={id=2,n=1},["0:3"]={id=1,n=18},["1:12"]=fixed}
+local original=PickupContainerItem;local fixedClicks=0;PickupContainerItem=function(b,s) if b==1 and s==12 then fixedClicks=fixedClicks+1 end;original(b,s) end
+AzerothConvenience.StartSort();TickSort(100)
+assert(not AzerothConvenience.sort and not Held and fixedClicks==0 and Inv["1:12"]==fixed and fixed.id==17591 and fixed.n==1 and fixed.locked)
+assert(Inv["0:1"].id==2 and Inv["0:2"].id==1 and Inv["0:2"].n==20 and Inv["0:3"].n==5)
+assert(string.find(AzerothConvenience.status,"保留1个锁定格",1,true) and string.find(AzerothConvenience.status,"背包1第12格",1,true))
+PickupContainerItem=original;GetContainerNumSlots=num;return "preexisting bag1 slot12 lock remains fixed while other items merge and sort without item loss"
+''',r'''
+MerchantFrame:Hide();Held=nil;Calls={};local fixed={id=1,n=7,locked=true};Inv={["0:1"]=fixed,["0:2"]={id=1,n=8},["0:3"]={id=1,n=6},["0:4"]={id=2,n=1}}
+local original=PickupContainerItem;local fixedClicks=0;PickupContainerItem=function(b,s) if b==0 and s==1 then fixedClicks=fixedClicks+1 end;original(b,s) end
+AzerothConvenience.StartSort();TickSort(100)
+assert(not AzerothConvenience.sort and not Held and fixedClicks==0 and Inv["0:1"]==fixed and fixed.n==7 and fixed.locked)
+assert(Inv["0:2"].id==2 and Inv["0:3"].id==1 and Inv["0:3"].n==14);PickupContainerItem=original
+return "locked partial stack is neither merge source nor destination; unlocked stacks compact separately"
+''',r'''
+MerchantFrame:Hide();Held=nil;Calls={};Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1},["0:4"]={id=1,n=5}}
+AzerothConvenience.StartSort();TickSort(1);assert(AzerothConvenience.sort and AzerothConvenience.sort.pending)
+Inv["0:1"].locked=true;local n=table.getn(Calls);TickSort(60)
+assert(not AzerothConvenience.sort and not Held and table.getn(Calls)==n and Inv["0:1"].locked and Inv["0:4"].n==5)
+assert(string.find(AzerothConvenience.status,"等待本次移动确认",1,true) and string.find(AzerothConvenience.status,"未发送后续移动",1,true))
+return "a pending move's own locked slot still serializes all further movement and stops on timeout"
+''',r'''
+MerchantFrame:Hide();Held=nil;Calls={};local a={id=1,n=7,locked=true};local b={id=2,n=1,locked=true};Inv={["0:1"]=a,["0:2"]=b}
+AzerothConvenience.StartSort();TickSort(10);assert(not AzerothConvenience.sort and table.getn(Calls)==0 and Inv["0:1"]==a and Inv["0:2"]==b and a.n==7 and b.n==1)
+assert(string.find(AzerothConvenience.status,"保留2个锁定格",1,true));return "all locked items remain untouched and zero pickups report retained locks rather than full-bag success"
 ''']
 args=[os.environ['ADDON_HARNESS'],str(root/'AddOns'),'--probe','AzerothConvenience']
 for check in checks:args+=['--eval',check]
