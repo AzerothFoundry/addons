@@ -67,11 +67,45 @@ checks += [r'''
 MerchantFrame:Hide();Inv={["0:1"]={id=2,n=1}};Held=nil;Calls={};CursorHasSpell=function() return 1 end;AzerothConvenience.StartSort();assert(not AzerothConvenience.sort and table.getn(Calls)==0);CursorHasSpell=function() return nil end;SpellIsTargeting=function() return 1 end;AzerothConvenience.StartSort();assert(not AzerothConvenience.sort);MerchantFrame:Show();Inv={["0:1"]={id=3,n=1}};AzerothConvenience.visit={skip=false,sold=0,blocked={},age=0,pendingAge=0};AzerothConvenience.MerchantStep();assert(table.getn(Calls)==0);SpellIsTargeting=function() return nil end;return "spell-targeting cursor is preserved and cannot act on inventory"
 ''']
 checks += [r'''
-SpellIsTargeting=function() return nil end;MerchantFrame:Hide();Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1}};Calls={};Held=nil;AzerothConvenience.ShowOptions();assert(string.find(AzerothConvenienceTitle:GetText(),"0.2.1",1,true));assert(string.find(AzerothConvenienceRules:GetText(),"炉石最前",1,true));AzerothConveniencePanelSort:Click();assert(AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"开始整理",1,true));AzerothConveniencePanelSort:Click();assert(not AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"已停止",1,true));SlashCmdList["AZEROTHCONVENIENCE"]("  SoRt  ");assert(AzerothConvenience.sort);TickSort(30);assert(not AzerothConvenience.sort and Inv["0:1"].id==2);assert(string.find(AzerothConvenienceStatus:GetText(),"整理完成",1,true));return "visible version/rules/status and GUI sort stop; whitespace/case slash starts actual sorting"
+SpellIsTargeting=function() return nil end;MerchantFrame:Hide();Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1}};Calls={};Held=nil;AzerothConvenience.ShowOptions();assert(string.find(AzerothConvenienceTitle:GetText(),"0.2.2",1,true));assert(string.find(AzerothConvenienceRules:GetText(),"炉石最前",1,true));AzerothConveniencePanelSort:Click();assert(AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"开始整理",1,true));AzerothConveniencePanelSort:Click();assert(not AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"已停止",1,true));SlashCmdList["AZEROTHCONVENIENCE"]("  SoRt  ");assert(AzerothConvenience.sort);TickSort(30);assert(not AzerothConvenience.sort and Inv["0:1"].id==2);assert(string.find(AzerothConvenienceStatus:GetText(),"整理完成",1,true));return "visible version/rules/status and GUI sort stop; whitespace/case slash starts actual sorting"
 ''']
 checks += [r'''
 MerchantFrame:Hide();Defs[6948]={"炉石",1,"杂物","杂物",1};Defs[5]={"橙装",5,"护甲","板甲",1};Defs[6]={"紫装",4,"武器","剑",1};Defs[7]={"蓝装",3,"护甲","布甲",1};Defs[8]={"药水",0,"消耗品","药水",1};Defs[9]={"任务信",5,"任务","任务",1};Defs[10]={"稀有材料",5,"材料","材料",1};
 Inv={["0:1"]={id=10,n=1},["0:2"]={id=9,n=1},["0:3"]={id=8,n=1},["0:4"]={id=7,n=1},["0:5"]={id=6,n=1},["0:6"]={id=5,n=1},["1:1"]={id=6948,n=1}};Held=nil;Calls={};AzerothConvenience.StartSort();TickSort(100);assert(not AzerothConvenience.sort);local order={6948,5,6,7,8,9};for i,id in ipairs(order) do assert(Inv["0:"..i].id==id,"category order") end;assert(Inv["1:1"].id==10);local n=0;AutoQuest={ShowOptions=function() n=n+1 end};AzerothConvenience.ShowOptions();AzerothConvenienceQuestOptions:Click();assert(n==1);return "hearthstone first, equipment orange-purple-blue, then consumables quests others; visible quest settings entry"
+''']
+checks += [r'''
+MerchantFrame:Hide();Held=nil;Calls={};Inv={["0:1"]={id=99,n=1},["0:2"]={id=2,n=1}};Defs[99]=nil
+local tip=CreateFrame("GameTooltip","AzerothConvenienceCacheFixture",UIParent,"GameTooltipTemplate");AzerothConvenience.cacheTip=tip
+local requests=0;tip.SetBagItem=function(self,b,s) assert(b==0 and s==1);requests=requests+1 end
+AzerothConvenience.StartSort();TickSort(1);assert(requests==1 and table.getn(Calls)==0 and AzerothConvenience.sort)
+assert(string.find(AzerothConvenience.status,"背包0第1格",1,true));assert(not tip:IsShown())
+Defs[99]={"迟到材料",1,"材料","材料",20};TickSort(30)
+assert(not AzerothConvenience.sort and not Held and Inv["0:1"].id==2 and Inv["0:2"].id==99)
+AzerothConvenience.cacheTip=nil;return "cache miss requests slot information, then resumes sorting after asynchronous record arrival"
+''',r'''
+MerchantFrame:Hide();Held=nil;Calls={};local oldBag=BagLinks[1];BagLinks[1]="item:4";Defs[4]=nil;Inv={["1:2"]={id=2,n=1}}
+local tip=CreateFrame("GameTooltip","AzerothConvenienceBagCacheFixture",UIParent,"GameTooltipTemplate");AzerothConvenience.cacheTip=tip
+local requests=0;tip.SetInventoryItem=function(self,unit,slot) assert(unit=="player" and slot==ContainerIDToInventoryID(1));requests=requests+1 end
+AzerothConvenience.StartSort();TickSort(1);assert(requests==1 and table.getn(Calls)==0)
+Defs[4]={"普通小包",1,"容器","袋",1};TickSort(30)
+assert(not AzerothConvenience.sort and not Held and Inv["0:1"].id==2)
+BagLinks[1]=oldBag;AzerothConvenience.cacheTip=nil;return "uncached equipped bag requests its own inventory record before classifying it"
+''']
+checks += [r'''
+MerchantFrame:Hide();Held=nil;Calls={};Inv={};local num=GetContainerNumSlots
+GetContainerNumSlots=function(b) return b==0 and 16 or b==1 and 16 or 0 end
+for i=1,24 do local id=1000+i;Defs[id]=nil;Inv[(i<=16 and "0:"..i or "1:"..(i-16))]={id=id,n=1} end
+local tip=CreateFrame("GameTooltip","AzerothConvenienceManyCacheFixture",UIParent,"GameTooltipTemplate");AzerothConvenience.cacheTip=tip
+local pending,wait,requests=nil,0,0
+tip.SetBagItem=function(self,b,s) local id=Inv[b..":"..s].id;if pending~=id then pending=id;wait=0;requests=requests+1 end end
+AzerothConvenience.StartSort();local elapsed=0
+for i=1,300 do
+ if pending then wait=wait+.2;if wait>=.6 then Defs[pending]={"材料"..pending,1,"材料","材料",1};pending=nil end end
+ AzerothConvenience.SortStep(.2);elapsed=elapsed+.2;if not AzerothConvenience.sort then break end
+end
+assert(elapsed>10 and requests==24 and not AzerothConvenience.sort and not Held)
+assert(string.find(AzerothConvenience.status,"整理完成",1,true));GetContainerNumSlots=num;AzerothConvenience.cacheTip=nil
+return "large cold cache may exceed ten seconds overall while each blocked record makes progress"
 ''']
 args=[os.environ['ADDON_HARNESS'],str(root/'AddOns'),'--probe','AzerothConvenience']
 for check in checks:args+=['--eval',check]

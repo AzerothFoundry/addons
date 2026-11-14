@@ -1,4 +1,4 @@
-local A={version="0.2.1",status="尚未整理；点击整理背包开始。"};AzerothConvenience=A
+local A={version="0.2.2",status="尚未整理；点击整理背包开始。"};AzerothConvenience=A
 local function config()
  AzerothConvenienceDB=AzerothConvenienceDB or {}
  for _,key in ipairs({"sell","repair","health"}) do if AzerothConvenienceDB[key]==nil then AzerothConvenienceDB[key]=true end end
