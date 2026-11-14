@@ -16,7 +16,7 @@ local function item(bag,slot)
  local link=GetContainerItemLink(bag,slot)
  if not link then return {bag=bag,slot=slot,empty=true} end
  local _,count,locked=GetContainerItemInfo(bag,slot)
- local name,_,quality,level,kind,sub,maxStack=GetItemInfo(link)
+ local name,_,quality,level,kind,sub,maxStack=A.ItemInfo(link)
  if not name or not count or not quality then requestInfo(bag,slot);return nil,"等待背包"..bag.."第"..slot.."格的物品资料……" end
  return {bag=bag,slot=slot,link=link,id=tonumber(string.match and string.match(link,"item:(%d+)") or string.gsub(link,".*item:(%d+).*","%1")),count=count,locked=locked,name=name,quality=quality,kind=kind or "",sub=sub or "",max=maxStack or 1}
 end
@@ -24,7 +24,7 @@ local function ordinary(bag)
  if bag==0 then return true end
  local link=GetInventoryItemLink("player",ContainerIDToInventoryID(bag))
  if not link then return false end
- local name,_,_,_,kind,sub=GetItemInfo(link)
+ local name,_,_,_,kind,sub=A.ItemInfo(link)
  if not name then requestInfo(nil,nil,ContainerIDToInventoryID(bag));return nil,"等待背包"..bag.."本身的物品资料……" end
  -- Compare against a native ordinary bag subtype, localized by the client.
  local _,_,_,_,normalKind,normalSub=GetItemInfo(4500)
@@ -94,7 +94,7 @@ function A.SortStep(dt)
  local slots,reason=snapshot()
  if not slots then
   if s.waitReason~=reason then s.wait=0;s.waitReason=reason end
-  A.SetStatus(reason or "等待物品信息或锁定解除……");s.wait=s.wait+dt;if s.wait>10 then A.StopSort("物品信息或锁定状态尚未就绪，请稍后重试。");end;return end
+  A.SetStatus(reason or "等待物品信息或锁定解除……");s.wait=s.wait+dt;if s.wait>10 then A.StopSort("整理已停止："..(reason or "物品信息或锁定状态尚未就绪。").."请稍后重试。");end;return end
  if s.pending then
   local a=item(s.pending.a.bag,s.pending.a.slot);local b=item(s.pending.b.bag,s.pending.b.slot)
   if not a or not b or a.locked or b.locked then return end

@@ -8,9 +8,9 @@ Defs={ [1]={"布",1,"材料","布",20},[2]={"剑",3,"武器","剑",1},[3]={"垃�
 BagLinks={[1]="item:4500",[2]="item:21340"}
 GetContainerNumSlots=function(b) return b==0 and 6 or b==1 and 4 or b==2 and 2 or 0 end
 ContainerIDToInventoryID=function(b) return b end
-GetInventoryItemLink=function(unit,b) return BagLinks[b] end
-GetItemInfo=function(link) local id=tonumber(type(link)=="number" and link or string.gsub(link,".*item:(%d+).*","%1"));local d=Defs[id];if not d then return end;return d[1],"item:"..id,d[2],1,d[3],d[4],d[5] end
-GetContainerItemLink=function(b,s) local e=Inv[b..":"..s];return e and "item:"..e.id end
+GetInventoryItemLink=function(unit,b) local link=BagLinks[b];if not link then return end;return "|cffffffff|H"..link..":0:0:0|h[背包]|h|r" end
+GetItemInfo=function(link) if type(link)=="string" and string.sub(link,1,5)~="item:" then return end;local id=tonumber(type(link)=="number" and link or string.gsub(link,".*item:(%d+).*","%1"));local d=Defs[id];if not d then return end;return d[1],"item:"..id,d[2],1,d[3],d[4],d[5] end
+GetContainerItemLink=function(b,s) local e=Inv[b..":"..s];return e and "|cffffffff|Hitem:"..e.id..":0:0:0|h[物品"..e.id.."]|h|r" end
 GetContainerItemInfo=function(b,s) local e=Inv[b..":"..s];if e then return "texture",e.n,e.locked,e.q end end
 CursorHasItem=function() return Held and 1 or nil end
 UnitAffectingCombat=function() return Combat end
@@ -67,7 +67,7 @@ checks += [r'''
 MerchantFrame:Hide();Inv={["0:1"]={id=2,n=1}};Held=nil;Calls={};CursorHasSpell=function() return 1 end;AzerothConvenience.StartSort();assert(not AzerothConvenience.sort and table.getn(Calls)==0);CursorHasSpell=function() return nil end;SpellIsTargeting=function() return 1 end;AzerothConvenience.StartSort();assert(not AzerothConvenience.sort);MerchantFrame:Show();Inv={["0:1"]={id=3,n=1}};AzerothConvenience.visit={skip=false,sold=0,blocked={},age=0,pendingAge=0};AzerothConvenience.MerchantStep();assert(table.getn(Calls)==0);SpellIsTargeting=function() return nil end;return "spell-targeting cursor is preserved and cannot act on inventory"
 ''']
 checks += [r'''
-SpellIsTargeting=function() return nil end;MerchantFrame:Hide();Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1}};Calls={};Held=nil;AzerothConvenience.ShowOptions();assert(string.find(AzerothConvenienceTitle:GetText(),"0.2.3",1,true));assert(string.find(AzerothConvenienceRules:GetText(),"炉石最前",1,true));AzerothConveniencePanelSort:Click();assert(AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"开始整理",1,true));AzerothConveniencePanelSort:Click();assert(not AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"已停止",1,true));SlashCmdList["AZEROTHCONVENIENCE"]("  SoRt  ");assert(AzerothConvenience.sort);TickSort(30);assert(not AzerothConvenience.sort and Inv["0:1"].id==2);assert(string.find(AzerothConvenienceStatus:GetText(),"整理完成",1,true));return "visible version/rules/status and GUI sort stop; whitespace/case slash starts actual sorting"
+SpellIsTargeting=function() return nil end;MerchantFrame:Hide();Inv={["0:1"]={id=3,n=1},["0:2"]={id=2,n=1}};Calls={};Held=nil;AzerothConvenience.ShowOptions();assert(string.find(AzerothConvenienceTitle:GetText(),"0.2.4",1,true));assert(string.find(AzerothConvenienceRules:GetText(),"炉石最前",1,true));AzerothConveniencePanelSort:Click();assert(AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"开始整理",1,true));AzerothConveniencePanelSort:Click();assert(not AzerothConvenience.sort);assert(string.find(AzerothConvenienceStatus:GetText(),"已停止",1,true));SlashCmdList["AZEROTHCONVENIENCE"]("  SoRt  ");assert(AzerothConvenience.sort);TickSort(30);assert(not AzerothConvenience.sort and Inv["0:1"].id==2);assert(string.find(AzerothConvenienceStatus:GetText(),"整理完成",1,true));return "visible version/rules/status and GUI sort stop; whitespace/case slash starts actual sorting"
 ''']
 checks += [r'''
 MerchantFrame:Hide();Defs[6948]={"炉石",1,"杂物","杂物",1};Defs[5]={"橙装",5,"护甲","板甲",1};Defs[6]={"紫装",4,"武器","剑",1};Defs[7]={"蓝装",3,"护甲","布甲",1};Defs[8]={"药水",0,"消耗品","药水",1};Defs[9]={"任务信",5,"任务","任务",1};Defs[10]={"稀有材料",5,"材料","材料",1};
@@ -106,6 +106,14 @@ end
 assert(elapsed>10 and requests==24 and not AzerothConvenience.sort and not Held)
 assert(string.find(AzerothConvenience.status,"整理完成",1,true));GetContainerNumSlots=num;AzerothConvenience.cacheTip=nil
 return "large cold cache may exceed ten seconds overall while each blocked record makes progress"
+''']
+checks += [r'''
+local info=GetItemInfo;local seen;GetItemInfo=function(value) seen=value;return info(value) end
+local full="|cff0070dd|Hitem:2:1899:-123:77|h[附魔随机属性剑]|h|r"
+assert(AzerothConvenience.ItemInfo(full)=="剑" and seen=="item:2:1899:-123:77")
+assert(AzerothConvenience.ItemInfo(2)=="剑" and seen==2)
+local invalid=AzerothConvenience.ItemInfo("not an item link");assert(invalid==nil)
+GetItemInfo=info;return "display hyperlinks normalize to complete vanilla item strings, retaining enchant and signed property fields"
 ''']
 args=[os.environ['ADDON_HARNESS'],str(root/'AddOns'),'--probe','AzerothConvenience']
 for check in checks:args+=['--eval',check]

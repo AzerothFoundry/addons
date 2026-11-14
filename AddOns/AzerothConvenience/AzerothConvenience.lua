@@ -1,4 +1,13 @@
-local A={version="0.2.3",status="尚未整理；点击整理背包开始。"};AzerothConvenience=A
+local A={version="0.2.4",status="尚未整理；点击整理背包开始。"};AzerothConvenience=A
+-- Vanilla GetItemInfo reads an ID or item: fields, not the colored display hyperlink.
+function A.ItemInfo(link)
+ if type(link)=="string" then
+  local _,_,item=string.find(link,"(item:[%d:%-]+)")
+  if not item then return end
+  link=item
+ end
+ return GetItemInfo(link)
+end
 local function config()
  AzerothConvenienceDB=AzerothConvenienceDB or {}
  for _,key in ipairs({"sell","repair","health"}) do if AzerothConvenienceDB[key]==nil then AzerothConvenienceDB[key]=true end end
@@ -46,7 +55,7 @@ function A.MerchantStep()
   for bag=0,4 do for slot=1,GetContainerNumSlots(bag) do
    local key,link,locked=saleKey(bag,slot)
    if link then
-    local _,_,quality=GetItemInfo(link)
+    local _,_,quality=A.ItemInfo(link)
     if quality==nil or locked then unresolved=true
     elseif quality==0 and not v.blocked[bag..":"..slot..":"..key] then
      v.pending={bag=bag,slot=slot,key=key};v.pendingAge=0;UseContainerItem(bag,slot);return
