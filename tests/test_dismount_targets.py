@@ -25,10 +25,17 @@ class TargetProfilesTest(unittest.TestCase):
         self.assertEqual(self.build([self.row(),self.row(1,effect=36)])['Fire\001Rank 1'],('enemy',0))
     def test_unknown_and_target_aura_requirements_fail_closed(self):
         aura=self.row(name='Execute');aura[17]=2
-        self.assertEqual(self.build([self.row(1),aura]),{})
+        self.assertEqual(self.build([self.row(22),aura]),{})
     def test_creature_restriction_preserved(self):
         row=self.row();row[14]=193
         self.assertEqual(self.build([row])['Fire\001Rank 1'],('enemy',193))
+    def test_self_and_no_self_flags(self):
+        own=self.row(1,'Armor',effect=6)
+        other=self.row(21,'OtherOnly');other[7]=0x80000
+        profiles=self.build([own,other])
+        self.assertEqual(profiles['Armor\001Rank 1'],('self',0))
+        self.assertEqual(profiles['OtherOnly\001Rank 1'],('friend-other',0))
+
     def test_wrong_dbc_layout_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'Spell.dbc';p.write_bytes(b'WDBC'+struct.pack('<4I',1,172,688,1)+b'\0'*689)

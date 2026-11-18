@@ -27,7 +27,8 @@ def build(rows,strings,creatures,cstrings):
         kind=None
         if targets and row[17]==0:
             if all(a==6 and b==0 for a,b in targets):kind='enemy'
-            if all(a==21 and b==0 for a,b in targets):kind='friend'
+            if all(a==21 and b==0 for a,b in targets):kind='friend-other' if row[7] & 0x80000 else 'friend'
+            if all(a==1 and b==0 for a,b in targets) and not row[7] & 0x80000:kind='self'
         profile=(kind,row[14]) if kind else None
         for locale in range(8):
             name=text(strings,row[120+locale])

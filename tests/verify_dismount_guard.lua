@@ -6,13 +6,16 @@ local range,usable,noPower=1,1,nil
 local start,duration=0,0
 local targetName,creature='Enemy','Humanoid'
 local deferred=false
+local autoSelf="0"
+function GetCVar()return autoSelf end
+function UnitIsUnit(a,b)return a==b end
 local globals,events={},{}
 SPELL_FAILED_NOT_MOUNTED='mounted';ERR_ATTACK_MOUNTED='attack-mounted'
 UIParent={};SlashCmdList={};DEFAULT_CHAT_FRAME={AddMessage=function()end}
 AzerothDismountData={spells={['Frost\001Rank 1']={kind='enemy',creatures=0},['Heal\001Rank 1']={kind='friend',creatures=0},['Control\001Rank 1']={kind='enemy',creatures=1}},creatures={Humanoid=1,Beast=2}}
 local actions={[1]={name='Frost',rank='Rank 1'},[2]={name='Heal',rank='Rank 1'},[3]={name='Unknown',rank=''},[4]={name='Control',rank='Rank 1'},[5]={name='Frost',rank='Rank 1',macro='Macro'}}
-function UnitExists()return exists and 1 or nil end
-function UnitIsDeadOrGhost()return dead and 1 or nil end
+function UnitExists(unit)return (unit=="player" or exists) and 1 or nil end
+function UnitIsDeadOrGhost(unit)return unit~="player" and dead and 1 or nil end
 function UnitCanAttack()return enemy and 1 or nil end
 function UnitCanAssist()return friend and 1 or nil end
 function UnitName()return targetName end
@@ -69,4 +72,19 @@ actions[1]={name='Frost',rank='Rank 1'};enemy=true;friend=false
 UseAction(1);event='ACTIONBAR_SLOT_CHANGED';events.fn();mountedError();assert(calls==3,'actionbar event invalidates pending cast')
 UseAction(1);mountedError();assert(calls==4,'deferred valid event');mountedError();assert(calls==4,'permission consumed once')
 EzDismount_chkandgetdown('Druid',{},'form',nil);assert(calls==5,'other form errors preserved')
+-- Own-target spells and the client's automatic/explicit self fallback.
+AzerothDismountData.spells['Armor\001Rank 1']={kind='self',creatures=0}
+AzerothDismountData.spells['OtherOnly\001Rank 1']={kind='friend-other',creatures=0}
+actions[6]={name='Armor',rank='Rank 1'};actions[7]={name='OtherOnly',rank='Rank 1'}
+deferred=false;exists=false;range=0
+local count=calls;UseAction(6);assert(calls==count+1,'intrinsic self cast without target')
+count=calls;UseAction(2);assert(calls==count,'autoSelfCast off keeps no-target heal mounted')
+autoSelf='1';UseAction(2);assert(calls==count+1,'auto self heal without target')
+exists=true;enemy=true;friend=false;count=calls;UseAction(2);assert(calls==count+1,'auto self heal with enemy selected, selected range ignored')
+count=calls;UseAction(1);assert(calls==count,'auto self does not turn enemy spell into self spell')
+count=calls;UseAction(7);assert(calls==count,'self-excluding friend spell stays mounted')
+autoSelf='0';count=calls;UseAction(2,nil,1);assert(calls==count+1,'explicit self heal')
+friend=true;enemy=false;range=0;autoSelf='1';count=calls;UseAction(2);assert(calls==count,'out-of-range friendly target does not silently become self')
+range=1;count=calls;UseAction(2);assert(calls==count+1,'valid friendly target retained with auto self on')
+usable=nil;count=calls;UseAction(6);assert(calls==count,'self spell resources still checked');usable=1
 print('PASS: spell-specific enemy/friend/creature gates, range, usability, cooldown, unknown/macro, stale/changed requests and native returns')
