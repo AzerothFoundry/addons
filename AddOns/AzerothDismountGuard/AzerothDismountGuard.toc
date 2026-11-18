@@ -1,0 +1,6 @@
+## Interface: 11200
+## Title: 自动下马目标保护
+## Notes: 为EzDismount保守拦截无目标或死亡目标触发的施法自动下马
+## Version: 0.1.0
+## Dependencies: EzDismount
+AzerothDismountGuard.lua
