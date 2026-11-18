@@ -102,13 +102,13 @@ function P.Build()
   local x=25+(tab-1)*285;P.titles[tab]=f:CreateFontString(nil,"OVERLAY","GameFontNormal");P.titles[tab]:SetPoint("TOPLEFT",f,"TOPLEFT",x,-53)
   P.buttons[tab]={}
   for i,node in ipairs(data.nodes) do
-   local t,index=tab,i;local b=CreateFrame("Button","AzerothTalentNode"..t.."_"..index,f);P.buttons[tab][i]=b;b:SetWidth(38);b:SetHeight(38)
+   local t,index,talent=tab,i,node;local b=CreateFrame("Button","AzerothTalentNode"..t.."_"..index,f);P.buttons[tab][i]=b;b:SetWidth(38);b:SetHeight(38)
    b:SetPoint("TOPLEFT",f,"TOPLEFT",x+25+(node.col-1)*54,-82-(node.row-1)*45);b:SetNormalTexture(node.texture);b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square");b:RegisterForClicks("LeftButtonUp","RightButtonUp")
    b.rank=b:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall");b.rank:SetPoint("BOTTOMRIGHT",b,"BOTTOMRIGHT",2,-2)
    b:SetScript("OnClick",function()P.Change(t,index,arg1=="RightButton" and -1 or 1)end)
    b:SetScript("OnEnter",function()
-    local rank=(P.plan[t] or {})[index] or 0;GameTooltip:SetOwner(this,"ANCHOR_RIGHT");GameTooltip:SetText(node.name.."（预览 "..rank.."/"..node.max.."）")
-    GameTooltip:AddLine(node.desc[math.max(1,rank)] or "",1,1,1,1);GameTooltip:Show()
+    local rank=(P.plan[t] or {})[index] or 0;GameTooltip:SetOwner(this,"ANCHOR_RIGHT");GameTooltip:SetText(talent.name.."（预览 "..rank.."/"..talent.max.."）")
+    GameTooltip:AddLine(talent.desc[math.max(1,rank)] or "",1,1,1,1);GameTooltip:Show()
    end);b:SetScript("OnLeave",function()GameTooltip:Hide()end)
   end
  end

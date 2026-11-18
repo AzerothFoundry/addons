@@ -2,6 +2,7 @@
 local source = arg[1] or 'AddOns/AzerothTalentPreview/AzerothTalentPreview.lua'
 table.getn = table.getn or function(t) return #t end -- host Lua compatibility for the 1.12 API
 local frames, tooltips, learned = {}, {}, 0
+local freePoints=48
 StaticPopupDialogs = {}; SlashCmdList = {}; UIParent = {}
 DEFAULT_CHAT_FRAME = {AddMessage=function() end}
 GameTooltip = {SetOwner=function() end, SetText=function(_, text) table.insert(tooltips,text) end,
@@ -31,7 +32,7 @@ function GetNumTalentTabs() return 1 end
 function GetTalentTabInfo() return '测试系','icon',3,'test-tree' end
 function GetNumTalents() return 2 end
 function GetTalentInfo(_,index) return '天赋'..index,'icon',1,index,index,5 end
-function UnitCharacterPoints() return 48 end
+function UnitCharacterPoints() return freePoints end
 function UnitLevel() return 60 end
 function UnitAffectingCombat() return false end
 function UnitIsDeadOrGhost() return false end
@@ -47,6 +48,12 @@ assert(string.find(tooltips[1],'预览 1/5',1,true),'first tooltip must use init
 assert(string.find(tooltips[2],'预览 2/5',1,true),'each callback must retain its node')
 P.Toggle();assert(not P.frame:IsShown(),'second toggle closes')
 P.Toggle();assert(P.frame:IsShown(),'reopen succeeds')
+AzerothTalentClear.scripts.OnClick()
+assert(P.Spent(P.plan)==0, 'clear must zero preview only')
+this=P.buttons[1][2];this.scripts.OnEnter()
+assert(string.find(tooltips[table.getn(tooltips)], '天赋2',1,true), 'clear retains per-node identity')
+freePoints=97;P.Toggle();P.Toggle()
+assert(tonumber(P.budget:GetText())==100, 'GM budget above 51 must remain supported')
 P.plan={};this=P.buttons[1][1];this.scripts.OnEnter()
 assert(string.find(tooltips[table.getn(tooltips)],'预览 0/5',1,true),'missing plan safely previews zero')
 assert(learned==0,'opening and hovering must not spend real talent points')
