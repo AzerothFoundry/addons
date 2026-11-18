@@ -7,6 +7,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--fixture', type=Path, default=ROOT / 'tests/verify_talent_preview.lua')
 parser.add_argument('--source', type=Path, default=ROOT / 'AddOns/AzerothTalentPreview/AzerothTalentPreview.lua')
 args = parser.parse_args()
 workspace = next((p for p in ROOT.parents if (p / 'benilla/crates/benilla-lua/Cargo.toml').exists()), None)
@@ -33,4 +34,4 @@ fn main() {
  }
 }
 ''')
-    subprocess.run(['cargo', 'run', '--offline', '--quiet', '--manifest-path', str(project / 'Cargo.toml'), '--target-dir', str(Path(tempfile.gettempdir()) / 'talent-native-vm-target'), '--', str(ROOT / 'tests/verify_talent_preview.lua'), str(args.source.resolve())], check=True)
+    subprocess.run(['cargo', 'run', '--offline', '--quiet', '--manifest-path', str(project / 'Cargo.toml'), '--target-dir', str(Path(tempfile.gettempdir()) / 'talent-native-vm-target'), '--', str(args.fixture.resolve()), str(args.source.resolve())], check=True)
