@@ -6,6 +6,9 @@ for relative, variable in [('AzerothSpellID/SpellNames.lua', 'AzerothSpellIDName
     expected = '-- Empty source placeholder. Generate locally from your own game data; never commit generated content.\n' + variable + ' = {}\n'
     if (root/'AddOns'/relative).read_text() != expected:
         raise SystemExit('Refusing public source package with generated game data: ' + relative)
+guard_data = root/'AddOns/AzerothDismountGuard/SpellTargets.lua'
+if guard_data.read_text() != '-- Empty local-data placeholder; generate from your own Spell.dbc. Never commit generated data.\nAzerothDismountData={spells={},creatures={}}\n':
+    raise SystemExit('Refusing public source package with generated dismount target data')
 out = root/'dist'; out.mkdir(exist_ok=True)
 archive = out/'addons-source-preview.zip'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:

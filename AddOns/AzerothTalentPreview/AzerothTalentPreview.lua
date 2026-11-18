@@ -91,7 +91,7 @@ function P.Apply()
 end
 StaticPopupDialogs["AZEROTH_TALENT_APPLY"]={text="确认实际学习预览中的 %s 点天赋？这会消耗真实天赋点。",button1="确认应用",button2="取消",timeout=0,whileDead=0,hideOnEscape=1,OnAccept=function()P.applying=true;P.applyAge=0;P.pending=nil end}
 function P.Build()
- local f=CreateFrame("Frame","AzerothTalentPreviewFrame",UIParent);P.frame=f
+ local f=CreateFrame("Frame","AzerothTalentPreviewFrame",UIParent);f:Hide();P.frame=f
  f:SetWidth(880);f:SetHeight(510);f:SetPoint("CENTER",UIParent,"CENTER",0,0);f:SetFrameStrata("DIALOG");f:EnableMouse(true);f:SetMovable(true);f:RegisterForDrag("LeftButton")
  f:SetScript("OnDragStart",function()this:StartMoving()end);f:SetScript("OnDragStop",function()this:StopMovingOrSizing()end)
  f:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",tile=true,tileSize=32,edgeSize=32,insets={left=8,right=8,top=8,bottom=8}})
@@ -102,13 +102,13 @@ function P.Build()
   local x=25+(tab-1)*285;P.titles[tab]=f:CreateFontString(nil,"OVERLAY","GameFontNormal");P.titles[tab]:SetPoint("TOPLEFT",f,"TOPLEFT",x,-53)
   P.buttons[tab]={}
   for i,node in ipairs(data.nodes) do
-   local t,index=tab,i;local b=CreateFrame("Button","AzerothTalentNode"..t.."_"..index,f);P.buttons[tab][i]=b;b:SetWidth(38);b:SetHeight(38)
+   local t,index,talent=tab,i,node;local b=CreateFrame("Button","AzerothTalentNode"..t.."_"..index,f);P.buttons[tab][i]=b;b:SetWidth(38);b:SetHeight(38)
    b:SetPoint("TOPLEFT",f,"TOPLEFT",x+25+(node.col-1)*54,-82-(node.row-1)*45);b:SetNormalTexture(node.texture);b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square");b:RegisterForClicks("LeftButtonUp","RightButtonUp")
    b.rank=b:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall");b.rank:SetPoint("BOTTOMRIGHT",b,"BOTTOMRIGHT",2,-2)
    b:SetScript("OnClick",function()P.Change(t,index,arg1=="RightButton" and -1 or 1)end)
    b:SetScript("OnEnter",function()
-    local rank=P.plan[t][index] or 0;GameTooltip:SetOwner(this,"ANCHOR_RIGHT");GameTooltip:SetText(node.name.."（预览 "..rank.."/"..node.max.."）")
-    GameTooltip:AddLine(node.desc[math.max(1,rank)] or "",1,1,1,1);GameTooltip:Show()
+    local rank=(P.plan[t] or {})[index] or 0;GameTooltip:SetOwner(this,"ANCHOR_RIGHT");GameTooltip:SetText(talent.name.."（预览 "..rank.."/"..talent.max.."）")
+    GameTooltip:AddLine(talent.desc[math.max(1,rank)] or "",1,1,1,1);GameTooltip:Show()
    end);b:SetScript("OnLeave",function()GameTooltip:Hide()end)
   end
  end
@@ -125,8 +125,9 @@ end
 function P.Toggle()
  if P.frame and P.frame:IsShown() then P.frame:Hide();return end
  local ok,message=P.Read();if not ok then say(message);return end
+ P.plan=P.RealPlan()
  if not P.frame then P.Build() end
- P.plan=P.RealPlan();local free=UnitCharacterPoints("player") or 0
+ local free=UnitCharacterPoints("player") or 0
  P.budget:SetText(tostring(math.max(UnitLevel("player")-9,P.Spent(P.plan)+free,0)))
  P.frame:Show();P.Paint()
 end
