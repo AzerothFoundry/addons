@@ -34,3 +34,5 @@ GM 的目的地和命令清单包含服务端命令、ID、名称和坐标，不
 背包回归还包括真实坐标命中测试 `tests/verify_convenience_hit.py`（另设 `BAGNON_ADDONS` 为本机插件目录），以及不替换物品读取/移动接口的 `tests/verify_convenience_native.py`（设 `BENILLA_UI_DEPS` 为已编译 benilla-ui 的 deps 目录，`RUSTC` 使用同一 Rust 工具链）。1.12 的物品资料查询先将显示超链接还原为完整 `item:` 串，保留附魔与随机属性字段。
 
 背包整理将已有锁定格视为固定位置，只对未锁定格合堆和排序；本轮已经发出的移动仍逐次等待确认。存在保留锁定格时只报告可移动物品整理完成，不报告整包完成，也不强制解除客户端物品锁。
+
+AzerothGM 0.6.15 adds self debuff removal on the Character tab. The world server must support .gmui auras clear-debuffs.

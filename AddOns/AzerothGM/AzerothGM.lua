@@ -6,6 +6,7 @@ local bgNames = { "战歌峡谷", "阿拉希盆地", "奥特兰克山谷" }
 local tabs = { "角色", "技能 / 天赋", "传送", "组队机器人", "战场测试", "命令 / 日志", "物品 / 邮件" }
 local roles = { [1] = "近战输出", [2] = "远程输出", [3] = "坦克", [4] = "治疗" }
 local messages = {
+    ["Negative auras removed"] = "已移除自身所有减益。",
     ["Invalid recipient name"] = "收件角色名无效。",
     ["Recipient character not found"] = "没有找到收件角色，请填写角色名而不是账号。",
     ["PvP item does not belong to recipient faction"] = "该军装物品不属于收件角色的阵营，未发送。",
@@ -698,7 +699,7 @@ function A.Build()
     f:SetScript("OnDragStart", function() this:StartMoving() end)
     f:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
     f:SetBackdrop({bgFile="Interface\\DialogFrame\\UI-DialogBox-Background", edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border", tile=true, tileSize=32, edgeSize=32, insets={left=8,right=8,top=8,bottom=8}})
-    label(f, "AzerothGMTitle", "艾泽拉斯 · GM 助手  "..((GetAddOnMetadata and GetAddOnMetadata("AzerothGM","Version")) or "0.6.10"), 25, -20, 760, "GameFontNormalLarge")
+    label(f, "AzerothGMTitle", "艾泽拉斯 · GM 助手  "..((GetAddOnMetadata and GetAddOnMetadata("AzerothGM","Version")) or "0.6.15"), 25, -20, 760, "GameFontNormalLarge")
     A.summary = label(f, "AzerothGMSummary", "请进入游戏后刷新状态。", 25, -49, 840, "GameFontHighlightSmall")
     local close = CreateFrame("Button", "AzerothGMClose", f, "UIPanelCloseButton"); close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -5, -5)
     close:SetScript("OnClick", function() A.frame:Hide() end)
@@ -721,6 +722,9 @@ function A.Build()
     label(p,nil,"金币变化（可填负数）",350,-20,210,"GameFontHighlightSmall")
     button(p,"AzerothGMSetMoney","增减金币",465,-40,135,function() local n=integer(A.money,-1000,1000); if n then A.Send("money "..n); A.Send("status") end end)
     button(p,"AzerothGMGoldQuick","+1000 金币",465,-73,135,function() A.Send("money 1000"); A.Send("status") end)
+    button(p,"AzerothGMClearDebuffs","移除自身所有减益",465,-145,185,function()
+        A.Send("auras clear-debuffs")
+    end)
     A.flags = label(p,"AzerothGMFlags","GM 状态待刷新",0,-111)
     for i, item in ipairs({{"gm","GM模式"},{"visible","对外可见"},{"god","无敌"},{"fly","飞行"}}) do
         local key=item[1]; local title=item[2]; local y=-145-(i-1)*37
